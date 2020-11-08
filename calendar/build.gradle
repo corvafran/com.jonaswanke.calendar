@@ -4,7 +4,6 @@ apply plugin: 'kotlin-android-extensions'
 
 apply from: rootProject.file('gradle-bintray-push.gradle')
 
-kotlin.experimental.coroutines "enable"
 
 android {
     buildToolsVersion rootProject.buildToolsVersion
