@@ -22,10 +22,7 @@ import com.jonaswanke.calendar.utils.DAY_IN_HOURS
 import com.jonaswanke.calendar.utils.Day
 import com.jonaswanke.calendar.utils.timeOfDay
 import com.jonaswanke.calendar.utils.toCalendar
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.delay
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.*
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -45,6 +42,8 @@ class DayEventsView @JvmOverloads constructor(
     companion object {
         private const val EVENT_POSITIONING_DEBOUNCE = 500L
     }
+
+    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     private var _onEventClickListener: ((Event) -> Unit)? = null
     var onEventClickListener: ((Event) -> Unit)?
@@ -144,7 +143,9 @@ class DayEventsView @JvmOverloads constructor(
 
         onUpdateDay(day)
         cal = day.start.toCalendar()
-        launch(UI) {
+
+
+        scope.launch {
             divider = ContextCompat.getDrawable(context, android.R.drawable.divider_horizontal_bright)
             invalidate()
         }
@@ -288,7 +289,7 @@ class DayEventsView @JvmOverloads constructor(
         this.events = events.sortedWith(compareBy({ eventData[it]?.start },
                 { -(eventData[it]?.end ?: Int.MIN_VALUE) }))
 
-        launch(UI) {
+        scope.launch {
             @Suppress("NAME_SHADOWING")
             val events = this@DayEventsView.events
             positionEvents()
@@ -472,8 +473,8 @@ class DayEventsView @JvmOverloads constructor(
     private fun requestPositionEventsAndLayout() {
         requestLayout()
 
-        if (eventPositionJob == null)
-            eventPositionJob = launch(UI) {
+        if (eventPositionJob == null) {
+            eventPositionJob = scope.launch {
                 eventPositionRequired = false
                 delay(EVENT_POSITIONING_DEBOUNCE)
                 positionEvents()
@@ -482,6 +483,7 @@ class DayEventsView @JvmOverloads constructor(
                 if (eventPositionRequired)
                     requestPositionEventsAndLayout()
             }
+        }
         else
             eventPositionRequired = true
     }

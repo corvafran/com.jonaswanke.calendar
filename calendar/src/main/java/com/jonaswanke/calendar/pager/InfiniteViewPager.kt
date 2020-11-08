@@ -9,8 +9,10 @@ import android.view.View
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.jonaswanke.calendar.BuildConfig
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 
 class InfiniteViewPager @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null) :
         ViewPager(context, attrs) {
@@ -21,6 +23,7 @@ class InfiniteViewPager @JvmOverloads constructor(context: Context, attrs: Attri
         const val STATE_SUPER = "STATE_SUPER"
         const val STATE_ADAPTER = "STATE_ADAPTER"
     }
+    private val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     var position: Int = 0
         private set
@@ -98,7 +101,7 @@ class InfiniteViewPager @JvmOverloads constructor(context: Context, attrs: Attri
         if (currentIndicator!!.javaClass != indicator.javaClass)
             return
 
-        launch(UI) {
+        scope.launch {
             @Suppress("UNCHECKED_CAST")
             val pagerAdapter = adapter as InfinitePagerAdapter<T, V>
             pagerAdapter.reset(indicator)

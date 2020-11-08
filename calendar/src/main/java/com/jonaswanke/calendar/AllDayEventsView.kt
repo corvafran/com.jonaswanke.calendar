@@ -12,8 +12,10 @@ import androidx.core.view.children
 import androidx.core.view.get
 import com.jonaswanke.calendar.RangeView.Companion.showAsAllDay
 import com.jonaswanke.calendar.utils.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.math.max
 import kotlin.properties.Delegates
@@ -28,6 +30,8 @@ class AllDayEventsView @JvmOverloads constructor(
     @StyleRes private val defStyleRes: Int = R.style.Calendar_AllDayEventsViewStyle,
     _range: DayRange? = null
 ) : ViewGroup(ContextThemeWrapper(context, defStyleRes), attrs, defStyleAttr) {
+
+    val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     private var _onEventClickListener: ((Event) -> Unit)? = null
     var onEventClickListener: ((Event) -> Unit)?
@@ -128,7 +132,7 @@ class AllDayEventsView @JvmOverloads constructor(
                 { -(eventData[it]?.end ?: Int.MIN_VALUE) }))
         this.events = sortedEvents
 
-        launch(UI) {
+        scope.launch {
             @Suppress("NAME_SHADOWING")
             positionEvents()
 

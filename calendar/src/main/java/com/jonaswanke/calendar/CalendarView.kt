@@ -18,8 +18,10 @@ import com.jonaswanke.calendar.pager.InfinitePagerAdapter
 import com.jonaswanke.calendar.pager.InfiniteViewPager
 import com.jonaswanke.calendar.utils.*
 import kotlinx.android.synthetic.main.view_calendar.view.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.properties.Delegates
 
@@ -45,6 +47,7 @@ class CalendarView @JvmOverloads constructor(
     @IntDef(RANGE_DAY, RANGE_3_DAYS, RANGE_WEEK)
     annotation class Range
 
+    val scope = CoroutineScope(Job() + Dispatchers.Main)
 
     var onEventClickListener: ((Event) -> Unit)?
             by Delegates.observable<((Event) -> Unit)?>(null) { _, _, _ -> updateListeners() }
@@ -59,7 +62,7 @@ class CalendarView @JvmOverloads constructor(
         get() {
             return views
                     .map { it.value }
-                    .flatMap {
+                    .flatMap { it: RangeView ->
                         val start = it.range.start.weekObj
                         val end = it.range.endExclusive.weekObj
                         return@flatMap generateSequence(start) { week ->
@@ -83,11 +86,9 @@ class CalendarView @JvmOverloads constructor(
 
         hours.hourHeight = new
         views[visibleStart]?.hourHeight = new
-        launch(UI) {
-            for (view in views.values)
+        for (view in views.values)
                 if (view.range.start != visibleStart)
                     view.hourHeight = new
-        }
         return@vetoable true
     }
     var hourHeightMin: Float by Delegates.observable(0f) { _, _, new ->
@@ -229,7 +230,7 @@ class CalendarView @JvmOverloads constructor(
                 views[indicator] = view
 
                 // Request events
-                launch(UI) {
+                scope.launch {
                     var currentWeek = week
                     var weeksLeft = ceil(range.toFloat() / WEEK_IN_DAYS).toInt()
                     while (weeksLeft > 0) {
